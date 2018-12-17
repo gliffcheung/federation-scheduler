@@ -1,23 +1,23 @@
 package types
 
 type Pod struct {
-	Name			string
-	Uid				string
-	NodeName		string
-	RequestMilliCpu	int64
-	RequestMemory 	int64
+	Name            string
+	Uid             string
+	NodeName        string
+	RequestMilliCpu int64
+	RequestMemory   int64
 }
 
 type Node struct {
-	Name				string
-	AllocatableMilliCpu	int64
-	AllocatableMemory	int64
+	Name                string
+	AllocatableMilliCpu int64
+	AllocatableMemory   int64
 }
 
 type User struct {
-	Uid			string
-	Priority	float64
-	index		int
+	Uid      string
+	Priority float64
+	index    int
 }
 
 type PriorityQueue []*User
@@ -50,4 +50,3 @@ func (pq *PriorityQueue) Pop() interface{} {
 	*pq = old[0 : n-1]
 	return user
 }
-

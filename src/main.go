@@ -2,18 +2,20 @@ package main
 
 import (
 	"flag"
-	"github.com/golang/glog"
-
 	"scheduler"
+
+	"github.com/golang/glog"
 )
 
-func main()  {
+func main() {
 	// setup glog
 	flag.Parse()
 	flag.Lookup("log_dir").Value.Set("../log")
 	defer glog.Flush()
 
+	glog.Info("scheduler starts.")
+	scheduler.Init()
 	go scheduler.DispatchPods()
 	go scheduler.Schedule()
-	for{}
+	scheduler.WatchPods()
 }

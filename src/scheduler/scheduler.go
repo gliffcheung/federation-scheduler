@@ -37,7 +37,7 @@ func DispatchPods() {
 
 func Schedule() {
 	for {
-		// fix UsersPriorityQ
+		// fix usersPriorityQ
 		usersActiveQLen := len(usersActiveQ)
 		for i := 0; i < usersActiveQLen; i++ {
 			uid := <-usersActiveQ

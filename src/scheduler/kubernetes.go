@@ -115,6 +115,59 @@ func getRunningPods() []types.Pod {
 	return runningPods
 }
 
+func getPodByName(podName, namespace string) (v1.Pod, error) {
+	pod, err := clientset.CoreV1().Pods(namespace).Get(podName, metav1.GetOptions{})
+	if err != nil {
+		glog.Error(err)
+	} else {
+		glog.Info("get pod:", pod)
+	}
+	return *pod, err
+}
+
+func deletePodByName(podName, namespace string) error {
+	err := clientset.CoreV1().Pods(namespace).Delete(podName, &metav1.DeleteOptions{})
+	if err != nil {
+		glog.Error(err)
+	} else {
+		glog.Info("delete pod:", podName)
+	}
+	return err
+}
+
+func createPod(pod v1.Pod) error {
+	containers := make([]v1.Container, 0)
+	for _, c := range pod.Spec.Containers {
+		container := v1.Container{
+			Name:      c.Name,
+			Image:     c.Image,
+			Command:   c.Command,
+			Args:      c.Args,
+			Resources: c.Resources,
+		}
+		containers = append(containers, container)
+	}
+	newPod := &v1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Pod",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: pod.Name,
+		},
+		Spec: v1.PodSpec{
+			Containers: containers,
+		},
+	}
+	_, err := clientset.CoreV1().Pods("default").Create(newPod)
+	if err != nil {
+		glog.Error(err)
+	} else {
+		glog.Info("create pod:", newPod)
+	}
+	return err
+}
+
 func updateAllocatedResource() {
 	for pod := range deletedPodCh {
 		nodeName := pod.NodeName

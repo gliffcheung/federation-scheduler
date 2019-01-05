@@ -36,6 +36,7 @@ func DispatchPods() {
 }
 
 func Schedule() {
+	idleTimes := 0
 	for {
 		// fix usersPriorityQ
 		usersActiveQLen := len(usersActiveQ)
@@ -71,14 +72,21 @@ func Schedule() {
 			default:
 				usersPresent[topUser.Uid] = false
 			}
+			idleTimes = 0
 		} else {
+			idleTimes += 1
+		}
+		if idleTimes == 3 {
 			// cluster is idle, and its resource could be shared.
+			nodes := getNodes()
+			UploadNode(nodes[len(nodes)-1])
 		}
 		time.Sleep(3 * time.Second)
 	}
 }
 
 func schedulePod(pod types.Pod) {
+	tryTimes := 0
 	for {
 		nodes := getNodes()
 		for _, node := range nodes {
@@ -90,9 +98,11 @@ func schedulePod(pod types.Pod) {
 			}
 		}
 		time.Sleep(3 * time.Second)
+		tryTimes += 1
+		if tryTimes == 3 {
+			break
+		}
 	}
 	// if cluster doesn't have enough resourse, outsource the pod.
-	/*
-		To-do
-	*/
+	UploadPod(pod)
 }

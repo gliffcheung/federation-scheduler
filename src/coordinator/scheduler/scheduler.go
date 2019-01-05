@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"container/heap"
+	"net/rpc"
 	"time"
 	"types"
 
@@ -13,16 +14,19 @@ var (
 	clustersPresent   map[string]bool
 	clustersActiveQ   chan string
 	clustersPodsQ     map[string]chan types.InterPod
+	clustersIp        map[string]string
 )
 
 func init() {
 	clustersPresent = make(map[string]bool)
 	clustersActiveQ = make(chan string, 10)
 	clustersPodsQ = make(map[string]chan types.InterPod)
+	clustersIp = make(map[string]string)
 }
 
 func RegisterCluster(cluster types.Cluster) {
 	clustersShare[cluster.Id] = 0
+	clustersIp[cluster.Id] = cluster.Ip
 }
 
 func DispatchPods(pendingPodCh chan types.InterPod) {
@@ -103,7 +107,25 @@ func schedulePodToNode(pod types.InterPod, node types.InterNode) {
 		if n.Name == node.Name {
 			clustersIdleNode[node.ClusterId][i].AllocatedMilliCpu += pod.RequestMilliCpu
 			clustersIdleNode[node.ClusterId][i].AllocatedMemory += pod.RequestMemory
+			break
 		}
 	}
+	uploadResult(pod.Pod, clustersIp[pod.ClusterId], clustersIp[node.ClusterId])
 	glog.Infof("Successfully schedule %s to %v", pod.Name, node)
+}
+
+func uploadResult(pod types.Pod, sourceIp, destIp string) {
+	client, err := rpc.DialHTTP("tcp", sourceIp+":4321")
+	if err != nil {
+		glog.Info(err)
+	}
+	result := types.Result{
+		Pod:    pod,
+		DestIp: destIp,
+	}
+	var reply int
+	err = client.Call("Server.ScheduleResult", result, &reply)
+	if err != nil {
+		glog.Info(err)
+	}
 }

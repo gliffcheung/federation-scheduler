@@ -62,6 +62,7 @@ func main() {
 
 	glog.Info("scheduler starts.")
 
+	// create server
 	rpc.Register(new(Server))
 	rpc.HandleHTTP()
 	listener, err := net.Listen("tcp", ":1234")

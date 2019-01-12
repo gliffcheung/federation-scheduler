@@ -28,6 +28,7 @@ func init() {
 	availableNodes = make([]types.Node, 0)
 	pendingPodCh = make(chan types.Pod, 10)
 	deletedPodCh = make(chan types.Pod, 10)
+	otherClustersPod = make(map[string]string)
 }
 
 func Init() {

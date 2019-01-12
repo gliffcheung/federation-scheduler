@@ -183,7 +183,7 @@ func createPod(outsourcePod types.OutsourcePod) error {
 			Containers: containers,
 		},
 	}
-	_, err := clientset.CoreV1().Pods("default").Create(newPod)
+	_, err := clientset.CoreV1().Pods("other-clusters").Create(newPod)
 	if err != nil {
 		glog.Error(err)
 	} else {

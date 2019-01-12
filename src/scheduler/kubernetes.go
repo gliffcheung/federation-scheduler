@@ -176,7 +176,7 @@ func createPod(outsourcePod types.OutsourcePod) error {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      pod.Name,
-			Namespace: "OtherClusters",
+			Namespace: "other-clusters",
 		},
 		Spec: v1.PodSpec{
 			Containers: containers,

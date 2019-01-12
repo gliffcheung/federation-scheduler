@@ -128,7 +128,7 @@ func uploadResult(pod types.Pod, sourceIp, destIp string) {
 		DestIp: destIp,
 	}
 	var reply int
-	err = client.Call("Server.ScheduleResult", result, &reply)
+	err = client.Call("Server.ReturnScheduleResult", result, &reply)
 	if err != nil {
 		glog.Info(err)
 	}

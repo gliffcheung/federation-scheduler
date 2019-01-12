@@ -8,10 +8,14 @@ type Pod struct {
 	RequestMemory   int64
 }
 
+type Resource struct {
+	MilliCpu int64
+	Memory   int64
+}
+
 type Node struct {
-	Name                string
-	AllocatableMilliCpu int64
-	AllocatableMemory   int64
+	Name string
+	Resource
 }
 
 type User struct {

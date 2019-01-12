@@ -8,11 +8,13 @@ import (
 
 var (
 	usersShare            map[string]float64
+	usersAllocatedRes     map[string]types.Resource
 	totalCpu, totalMemory int64
 )
 
 func init() {
 	usersShare = make(map[string]float64)
+	usersAllocatedRes = make(map[string]types.Resource)
 }
 
 func initShare() {
@@ -22,14 +24,22 @@ func initShare() {
 	}
 	nodes := getNodes()
 	for _, node := range nodes {
-		totalCpu += node.AllocatableMilliCpu
-		totalMemory += node.AllocatableMemory
+		totalCpu += node.MilliCpu
+		totalMemory += node.Memory
 	}
 	pods := getRunningPods()
 	for _, pod := range pods {
-		dominantShare := max(float64(pod.RequestMilliCpu)/float64(totalCpu), float64(pod.RequestMemory)/float64(totalMemory))
-		share, _ := usersShare[pod.Uid]
-		usersShare[pod.Uid] = share + dominantShare
+		var res types.Resource
+		res, ok := usersAllocatedRes[pod.Uid]
+		if ok {
+			res.MilliCpu += pod.RequestMilliCpu
+			res.Memory += pod.RequestMemory
+		} else {
+			res.MilliCpu = pod.RequestMilliCpu
+			res.Memory = pod.RequestMemory
+		}
+		usersAllocatedRes[pod.Uid] = res
+		usersShare[pod.Uid] = max(float64(res.MilliCpu)/float64(totalCpu), float64(res.Memory)/float64(totalMemory))
 	}
 	glog.Info("share is completed.")
 }

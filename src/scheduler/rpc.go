@@ -5,10 +5,10 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
+	"time"
 	"types"
 
 	"github.com/golang/glog"
-	v1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -25,10 +25,10 @@ var (
 
 type Server int
 
-func (t *Server) CreatePod(pod *v1.Pod, reply *int) error {
-	err := createPod(*pod)
+func (t *Server) CreatePod(outsourcePod *types.OutsourcePod, reply *int) error {
+	err := createPod(*outsourcePod)
 	if err == nil {
-		glog.Info("CreatePod:", pod)
+		glog.Info("CreatePod:", outsourcePod.Pod)
 	} else {
 		glog.Error(err)
 	}
@@ -36,7 +36,7 @@ func (t *Server) CreatePod(pod *v1.Pod, reply *int) error {
 	return err
 }
 
-func (t *Server) UploadResult(result *types.Result, reply *int) error {
+func (t *Server) ReturnScheduleResult(result *types.ScheduleResult, reply *int) error {
 	cli, err := rpc.DialHTTP("tcp", result.DestIp+":"+clientPort)
 	if err == nil {
 		glog.Info("UploadResult:", result)
@@ -44,7 +44,11 @@ func (t *Server) UploadResult(result *types.Result, reply *int) error {
 		glog.Error(err)
 	}
 	var reply2 int
-	err = cli.Call("Server.CreatePod", &result.Pod, &reply2)
+	outsourcePod := types.OutsourcePod{
+		Pod:      podInfo[result.Pod.Name],
+		SourceIP: clientAddress,
+	}
+	err = cli.Call("Server.CreatePod", &outsourcePod, &reply2)
 	if err == nil {
 		glog.Info("Server.CreatePod:", result.Pod)
 	} else {
@@ -53,7 +57,13 @@ func (t *Server) UploadResult(result *types.Result, reply *int) error {
 	return err
 }
 
-func init() {
+func (t *Server) ReturnExecuteResult(result *types.ExecuteResult, reply *int) error {
+	executeResultQ <- *result
+	*reply = 1
+	return nil
+}
+
+func RpcInit() {
 	// connect to coordinator
 	var err error
 	client, err = rpc.DialHTTP("tcp", serverAddress+":"+serverPort)
@@ -70,14 +80,40 @@ func init() {
 		fmt.Println(err)
 	}
 	go http.Serve(listener, nil)
+	go Heartbeat()
 }
 
 func RegisterCluster() {
-	cluster := types.Cluster{Id: clusterId, Ip: clientAddress}
+	nodes := getNodes()
+	var totalResource types.Resource
+	for _, node := range nodes {
+		totalResource.MilliCpu += node.MilliCpu
+		totalResource.Memory += node.Memory
+	}
+	cluster := types.Cluster{Id: clusterId, Ip: clientAddress, TotalResource: totalResource}
 	var reply int
 	err := client.Call("Server.RegisterCluster", cluster, &reply)
 	if err != nil {
 		glog.Info(err)
+	}
+}
+
+func Heartbeat() {
+	for {
+		nodes := getNodes()
+		var idleResource types.Resource
+		for _, node := range nodes {
+			allocatedRes := allocatedResource[node.Name]
+			idleResource.MilliCpu += node.MilliCpu - allocatedRes.MilliCpu
+			idleResource.Memory += node.Memory - allocatedRes.Memory
+		}
+		cluster := types.Cluster{Id: clusterId, IdleResource: idleResource}
+		var reply int
+		err := client.Call("Server.Heartbeat", cluster, &reply)
+		if err != nil {
+			glog.Info(err)
+		}
+		time.Sleep(10 * time.Second)
 	}
 }
 
@@ -90,21 +126,18 @@ func UploadPod(pod types.Pod) {
 	}
 }
 
-func UploadNode(node types.Node) {
-	interNode := &types.InterNode{Node: node, ClusterId: clusterId}
-	var reply int
-	err := client.Call("Server.UploadNode", interNode, &reply)
+func ReturnExecuteResult(result types.ExecuteResult) {
+	// connect to otherCluster
+	var err error
+	clusterIp := otherClustersPod[result.Pod.Name]
+	client, err = rpc.DialHTTP("tcp", clusterIp+":"+clientPort)
 	if err != nil {
 		glog.Info(err)
 	}
-}
 
-func UnloadNode() (types.InterNode, error) {
-	cluster := types.Cluster{Id: clusterId}
-	var interNode types.InterNode
-	err := client.Call("Server.UnloadNode", &cluster, &interNode)
+	var reply int
+	err = client.Call("Server.ReturnExecuteResult", &result, &reply)
 	if err != nil {
 		glog.Info(err)
 	}
-	return interNode, err
 }

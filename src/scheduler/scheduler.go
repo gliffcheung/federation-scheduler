@@ -13,12 +13,14 @@ var (
 	usersPresent   map[string]bool //userPresent[Uid] == true means that the Uid has been in usersPriorityQ.
 	usersActiveQ   chan string
 	usersPodsQ     map[string]chan types.Pod
+	highPriorityCh chan types.Pod
 )
 
 func init() {
 	usersPresent = make(map[string]bool)
 	usersActiveQ = make(chan string, 10)
 	usersPodsQ = make(map[string]chan types.Pod)
+	highPriorityCh = make(chan types.Pod, 10)
 }
 
 func DispatchPods() {
@@ -36,8 +38,15 @@ func DispatchPods() {
 }
 
 func Schedule() {
-	idleTimes := 0
 	for {
+		// schedule pod in highPriorityCh at first
+		select {
+		case pod := <-highPriorityCh:
+			schedulePod(pod)
+			continue
+		default:
+		}
+
 		// fix usersPriorityQ
 		usersActiveQLen := len(usersActiveQ)
 		for i := 0; i < usersActiveQLen; i++ {
@@ -55,7 +64,7 @@ func Schedule() {
 			}
 		}
 
-		// schedule pod
+		// schedule local pod
 		if len(usersPriorityQ) > 0 {
 			topUser := heap.Pop(&usersPriorityQ).(*types.User)
 			select {
@@ -72,14 +81,6 @@ func Schedule() {
 			default:
 				usersPresent[topUser.Uid] = false
 			}
-			idleTimes = 0
-		} else {
-			idleTimes += 1
-		}
-		if idleTimes == 3 {
-			// cluster is idle, and its resource could be shared.
-			nodes := getNodes()
-			UploadNode(nodes[len(nodes)-1])
 		}
 		time.Sleep(3 * time.Second)
 	}
@@ -91,8 +92,7 @@ func schedulePod(pod types.Pod) {
 		nodes := getNodes()
 		for _, node := range nodes {
 			res := allocatedResource[node.Name]
-			if res.allocatedMilliCpu+pod.RequestMilliCpu <= node.AllocatableMilliCpu &&
-				res.allocatedMemory+pod.RequestMemory <= node.AllocatableMemory {
+			if res.MilliCpu+pod.RequestMilliCpu <= node.MilliCpu && res.Memory+pod.RequestMemory <= node.Memory {
 				schedulePodToNode(pod, node)
 				return
 			}
@@ -105,4 +105,5 @@ func schedulePod(pod types.Pod) {
 	}
 	// if cluster doesn't have enough resourse, outsource the pod.
 	UploadPod(pod)
+	deletePodByName(pod.Name, pod.Uid)
 }

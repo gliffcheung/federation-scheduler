@@ -1,15 +1,10 @@
 package types
 
+import v1 "k8s.io/api/core/v1"
+
 type InterPod struct {
 	Pod
 	ClusterId string
-}
-
-type InterNode struct {
-	Node
-	ClusterId         string
-	AllocatedMilliCpu int64
-	AllocatedMemory   int64
 }
 
 type Cluster struct {
@@ -18,6 +13,8 @@ type Cluster struct {
 	index            int
 	Ip               string
 	ContributedShare float64
+	TotalResource    Resource
+	IdleResource     Resource
 }
 
 type ClustersPriorityQueue []*Cluster
@@ -59,7 +56,25 @@ func (c ClusterSlice) Less(i, j int) bool {
 	return c[i].ContributedShare < c[j].ContributedShare
 }
 
-type Result struct {
+type OutsourcePod struct {
+	v1.Pod
+	SourceIP string
+}
+
+type ScheduleResult struct {
 	Pod
 	DestIp string
+}
+
+type ExecuteResult struct {
+	Pod
+	CreateTime int64
+	StartTime  int64
+	Status     string
+}
+
+type PodResult struct {
+	Pod
+	CreateTime string
+	FinishTime string
 }

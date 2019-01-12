@@ -12,14 +12,16 @@ import (
 	"github.com/golang/glog"
 )
 
+const (
+	clientPort = "4321"
+)
+
 var (
 	pendingPodCh chan types.InterPod
-	idleNodeCh   chan types.InterNode
 )
 
 func init() {
 	pendingPodCh = make(chan types.InterPod, 10)
-	idleNodeCh = make(chan types.InterNode, 10)
 }
 
 type Server int
@@ -31,27 +33,18 @@ func (t *Server) RegisterCluster(cluster *types.Cluster, reply *int) error {
 	return nil
 }
 
+func (t *Server) Heartbeat(cluster *types.Cluster, reply *int) error {
+	scheduler.UpdateCluster(*cluster)
+	glog.Info("Update cluster:", cluster)
+	*reply = 1
+	return nil
+}
+
 func (t *Server) UploadPod(pod *types.InterPod, reply *int) error {
 	pendingPodCh <- *pod
 	glog.Info("UploadPod:", pod)
 	*reply = 1
 	return nil
-}
-
-func (t *Server) UploadNode(node *types.InterNode, reply *int) error {
-	idleNodeCh <- *node
-	glog.Info("UploadNode:", node)
-	*reply = 1
-	return nil
-}
-
-func (t *Server) UnloadNode(cluster *types.Cluster, node *types.InterNode) error {
-	var err error
-	*node, err = scheduler.UnloadNode((*cluster).Id)
-	if err == nil {
-		glog.Info("UnloadNode:", node)
-	}
-	return err
 }
 
 func main() {
@@ -71,6 +64,19 @@ func main() {
 	}
 	go http.Serve(listener, nil)
 	go scheduler.DispatchPods(pendingPodCh)
-	go scheduler.DispatchNodes(idleNodeCh)
 	scheduler.Schedule()
+}
+
+func ReturnScheduleResult(result *types.ScheduleResult, sourceIp string) {
+	cli, err := rpc.DialHTTP("tcp", sourceIp+":"+clientPort)
+	if err == nil {
+		glog.Info("ReturnScheduleResult:", result, " to ", sourceIp)
+	} else {
+		glog.Error(err)
+	}
+	var reply int
+	err = cli.Call("Server.ReturnExecuteResult", result, &reply)
+	if err != nil {
+		glog.Error(err)
+	}
 }

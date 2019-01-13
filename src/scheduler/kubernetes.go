@@ -162,11 +162,15 @@ func createPod(outsourcePod types.OutsourcePod) error {
 	containers := make([]v1.Container, 0)
 	for _, c := range pod.Spec.Containers {
 		container := v1.Container{
-			Name:      c.Name,
-			Image:     c.Image,
-			Command:   c.Command,
-			Args:      c.Args,
-			Resources: c.Resources,
+			Name:    c.Name,
+			Image:   c.Image,
+			Command: c.Command,
+			Args:    c.Args,
+			Resources: v1.ResourceRequirements{
+				Limits:   c.Resources.Limits,
+				Requests: c.Resources.Requests,
+			},
+			ImagePullPolicy: c.ImagePullPolicy,
 		}
 		containers = append(containers, container)
 	}
@@ -180,7 +184,9 @@ func createPod(outsourcePod types.OutsourcePod) error {
 			Namespace: "other-clusters",
 		},
 		Spec: v1.PodSpec{
-			Containers: containers,
+			SchedulerName: pod.Spec.SchedulerName,
+			RestartPolicy: pod.Spec.RestartPolicy,
+			Containers:    containers,
 		},
 	}
 	_, err := clientset.CoreV1().Pods("other-clusters").Create(newPod)

@@ -66,17 +66,3 @@ func main() {
 	go scheduler.DispatchPods(pendingPodCh)
 	scheduler.Schedule()
 }
-
-func ReturnScheduleResult(result *types.ScheduleResult, sourceIp string) {
-	cli, err := rpc.DialHTTP("tcp", sourceIp+":"+clientPort)
-	if err == nil {
-		glog.Info("ReturnScheduleResult:", result, " to ", sourceIp)
-	} else {
-		glog.Error(err)
-	}
-	var reply int
-	err = cli.Call("Server.ReturnExecuteResult", result, &reply)
-	if err != nil {
-		glog.Error(err)
-	}
-}

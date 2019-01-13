@@ -111,7 +111,7 @@ func schedulePod(pod types.InterPod) {
 				uploadResult(pod.Pod, clustersInfo[pod.ClusterId].Ip, clustersInfo[clusterId].Ip)
 				fixContributedResource(pod, clusterId)
 				glog.Infof("Successfully schedule %s of %s to %s.", pod.Pod.Name, pod.ClusterId, clusterId)
-				break
+				return
 			}
 			time.Sleep(3 * time.Second)
 		}
@@ -119,14 +119,17 @@ func schedulePod(pod types.InterPod) {
 }
 
 func uploadResult(pod types.Pod, sourceIp, destIp string) {
-	client, err := rpc.DialHTTP("tcp", sourceIp+":4321")
-	if err != nil {
-		glog.Info(err)
-	}
 	result := &types.ScheduleResult{
 		Pod:    pod,
 		DestIp: destIp,
 	}
+	client, err := rpc.DialHTTP("tcp", sourceIp+":4321")
+	if err == nil {
+		glog.Info("ReturnScheduleResult:", result, " to ", sourceIp)
+	} else {
+		glog.Info(err)
+	}
+
 	var reply int
 	err = client.Call("Server.ReturnScheduleResult", result, &reply)
 	if err != nil {

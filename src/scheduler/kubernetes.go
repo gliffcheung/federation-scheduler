@@ -276,7 +276,7 @@ func WatchPods() {
 			case "ADDED":
 				if statusPhase == v1.PodPending && pod.Spec.SchedulerName != "default-scheduler" && pod.Spec.NodeName == "" {
 					// Need to be scheduled.
-					if pod.Namespace == "OtherClusters" {
+					if pod.Namespace == "other-clusters" {
 						highPriorityCh <- newPod
 						glog.Info("highPriorytyCh <- ", newPod)
 					} else {
@@ -285,8 +285,7 @@ func WatchPods() {
 					}
 				}
 				if statusPhase == v1.PodPending && pod.Spec.NodeName == "" {
-					_, ok := podInfo[pod.Name]
-					if !ok && pod.Namespace == "OtherClusters" {
+					if pod.Namespace != "other-clusters" {
 						podInfo[pod.Name] = *pod
 					}
 				}

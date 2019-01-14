@@ -141,13 +141,13 @@ func ReturnExecuteResult(result types.ExecuteResult) {
 	// connect to otherCluster
 	var err error
 	clusterIp := otherClustersPod[result.Pod.Name]
-	client, err = rpc.DialHTTP("tcp", clusterIp+":"+clientPort)
+	cli, err := rpc.DialHTTP("tcp", clusterIp+":"+clientPort)
 	if err != nil {
 		glog.Info(err)
 	}
 
 	var reply int
-	err = client.Call("Server.ReturnExecuteResult", &result, &reply)
+	err = cli.Call("Server.ReturnExecuteResult", &result, &reply)
 	if err != nil {
 		glog.Info(err)
 	}

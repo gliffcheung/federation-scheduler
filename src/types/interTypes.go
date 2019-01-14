@@ -1,6 +1,8 @@
 package types
 
-import v1 "k8s.io/api/core/v1"
+import (
+	v1 "k8s.io/api/core/v1"
+)
 
 type InterPod struct {
 	Pod
@@ -58,6 +60,7 @@ func (c ClusterSlice) Less(i, j int) bool {
 
 type OutsourcePod struct {
 	v1.Pod
+	Resource
 	SourceIP string
 }
 

@@ -43,10 +43,21 @@ func (t *Server) ReturnScheduleResult(result *types.ScheduleResult, reply *int) 
 	} else {
 		glog.Error(err)
 	}
+	// create a outsourcePod
 	var reply2 int
+	var requestsMilliCpu, requestsMemory int64
+	pod := podInfo[result.Pod.Name]
+	for _, ctn := range pod.Spec.Containers {
+		requestsMilliCpu += ctn.Resources.Requests.Cpu().MilliValue()
+		requestsMemory += ctn.Resources.Requests.Memory().Value() / 1024 / 1024
+	}
 	outsourcePod := types.OutsourcePod{
 		Pod:      podInfo[result.Pod.Name],
 		SourceIP: clientAddress,
+		Resource: types.Resource{
+			MilliCpu: requestsMilliCpu,
+			Memory:   requestsMemory,
+		},
 	}
 	err = cli.Call("Server.CreatePod", &outsourcePod, &reply2)
 	if err == nil {

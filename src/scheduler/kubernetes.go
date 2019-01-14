@@ -8,6 +8,7 @@ import (
 	"github.com/golang/glog"
 
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -160,6 +161,9 @@ func createPod(outsourcePod types.OutsourcePod) error {
 	pod := outsourcePod.Pod
 	otherClustersPod[pod.Name] = outsourcePod.SourceIP
 	containers := make([]v1.Container, 0)
+	resourceList := make(map[v1.ResourceName]resource.Quantity)
+	resourceList["cpu"] = *resource.NewMilliQuantity(outsourcePod.MilliCpu, resource.DecimalSI)
+	resourceList["memory"] = *resource.NewQuantity(outsourcePod.Memory*1024*1024, resource.BinarySI)
 	for _, c := range pod.Spec.Containers {
 		container := v1.Container{
 			Name:    c.Name,
@@ -167,8 +171,7 @@ func createPod(outsourcePod types.OutsourcePod) error {
 			Command: c.Command,
 			Args:    c.Args,
 			Resources: v1.ResourceRequirements{
-				Limits:   c.Resources.Limits,
-				Requests: c.Resources.Requests,
+				Requests: resourceList,
 			},
 			ImagePullPolicy: c.ImagePullPolicy,
 		}

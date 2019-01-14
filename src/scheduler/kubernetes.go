@@ -304,8 +304,8 @@ func WatchPods() {
 					deletedPodCh <- newPod
 					glog.Info("deletedPodCh <- ", newPod)
 					// Return executeResult
-					createTime := pod.CreationTimestamp.Size()
-					startTime := pod.Status.StartTime.Size()
+					createTime := pod.CreationTimestamp.ProtoTime().Seconds
+					startTime := pod.Status.StartTime.ProtoTime().Seconds
 					executeResult := types.ExecuteResult{
 						Pod:        newPod,
 						CreateTime: int64(createTime),

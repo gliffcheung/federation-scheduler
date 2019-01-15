@@ -159,7 +159,8 @@ func deletePodByName(podName, namespace string) error {
 
 func createPod(outsourcePod types.OutsourcePod) error {
 	pod := outsourcePod.Pod
-	otherClustersPod[pod.Name] = outsourcePod.SourceIP
+	podName := outsourcePod.ClusterId + "-" + pod.Name
+	otherClustersPod[podName] = outsourcePod.SourceIP
 	containers := make([]v1.Container, 0)
 	resourceList := make(map[v1.ResourceName]resource.Quantity)
 	resourceList["cpu"] = *resource.NewMilliQuantity(outsourcePod.MilliCpu, resource.DecimalSI)
@@ -183,7 +184,7 @@ func createPod(outsourcePod types.OutsourcePod) error {
 			Kind:       "Pod",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      pod.Name,
+			Name:      podName,
 			Namespace: "other-clusters",
 		},
 		Spec: v1.PodSpec{

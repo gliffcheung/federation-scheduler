@@ -51,8 +51,9 @@ func (t *Server) ReturnScheduleResult(result *types.ScheduleResult, reply *int) 
 		requestsMemory += ctn.Resources.Requests.Memory().Value() / 1024 / 1024
 	}
 	outsourcePod := types.OutsourcePod{
-		Pod:      podInfo[result.Pod.Name],
-		SourceIP: clientAddress,
+		Pod:       podInfo[result.Pod.Name],
+		ClusterId: clusterId,
+		SourceIP:  clientAddress,
 		Resource: types.Resource{
 			MilliCpu: requestsMilliCpu,
 			Memory:   requestsMemory,

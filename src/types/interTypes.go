@@ -67,7 +67,8 @@ func (c ClusterSlice) Less(i, j int) bool {
 type OutsourcePod struct {
 	v1.Pod
 	Resource
-	SourceIP string
+	ClusterId string
+	SourceIP  string
 }
 
 type ScheduleResult struct {

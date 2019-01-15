@@ -1,7 +1,7 @@
 package scheduler
 
 import (
-	"io/ioutil"
+	"os"
 	"strconv"
 	"types"
 
@@ -22,20 +22,18 @@ func init() {
 
 func HandleExecuteResult() {
 	filename := "../scheduleResult.csv"
-	var content string
-	for result := range executeResultQ {
-		stamp := podInfo[result.Name].CreationTimestamp
-		createTime := strconv.FormatInt(stamp.ProtoTime().Seconds, 10)
-		startTime := strconv.FormatInt(result.StartTime, 10)
-		content += podInfo[result.Name].Namespace + "," + result.Name + "," + createTime + "," + startTime + "\n"
-	}
-	WriteWithIoutil(filename, content)
-}
-
-func WriteWithIoutil(filename, content string) {
-	data := []byte(content)
-	err := ioutil.WriteFile(filename, data, 0644)
+	fd, err := os.OpenFile(filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
 		glog.Error()
 	}
+	var content string
+	for result := range executeResultQ {
+		stamp := podInfo[result.Name].CreationTimestamp
+		waitTime := result.StartTime - stamp.ProtoTime().Seconds
+		content = podInfo[result.Name].Namespace + "," + result.Name + "," + strconv.FormatInt(result.RequestMemory, 10) + "," +
+			strconv.FormatInt(result.RequestMilliCpu, 10) + "," + strconv.FormatInt(waitTime, 10) + "\n"
+		buf := []byte(content)
+		fd.Write(buf)
+	}
+	defer fd.Close()
 }

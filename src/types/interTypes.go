@@ -16,7 +16,13 @@ type Cluster struct {
 	Ip               string
 	ContributedShare float64
 	TotalResource    Resource
-	IdleResource     Resource
+	IdleNodes        []InterNode
+}
+
+type InterNode struct {
+	Node
+	ClusterId    string
+	IdleResource Resource
 }
 
 type ClustersPriorityQueue []*Cluster

@@ -15,9 +15,8 @@ var (
 	clustersActiveQ   chan string
 	clustersPodsQ     map[string]chan types.InterPod
 	clustersInfo      map[string]types.Cluster
-	clustersIdleRes   map[string]types.Resource
+	IdleNodes         map[string]types.InterNode
 	totalResource     types.Resource
-	idleResource      types.Resource
 )
 
 func init() {
@@ -25,7 +24,7 @@ func init() {
 	clustersActiveQ = make(chan string, 10)
 	clustersPodsQ = make(map[string]chan types.InterPod)
 	clustersInfo = make(map[string]types.Cluster)
-	clustersIdleRes = make(map[string]types.Resource)
+	IdleNodes = make(map[string]types.InterNode)
 }
 
 func RegisterCluster(cluster types.Cluster) {
@@ -37,16 +36,14 @@ func RegisterCluster(cluster types.Cluster) {
 }
 
 func UpdateCluster(cluster types.Cluster) {
-	resource, ok := clustersIdleRes[cluster.Id]
-	if ok {
-		idleResource.Memory += cluster.IdleResource.Memory - resource.Memory
-		idleResource.MilliCpu += cluster.IdleResource.MilliCpu - resource.MilliCpu
-	} else {
-		idleResource.Memory = cluster.IdleResource.Memory
-		idleResource.MilliCpu = cluster.IdleResource.MilliCpu
+	for _, node := range cluster.IdleNodes {
+		nodeName := cluster.Id + node.Name
+		idleNode, ok := IdleNodes[nodeName]
+		if !ok || idleNode.IdleResource.MilliCpu != node.IdleResource.MilliCpu || idleNode.IdleResource.Memory != node.IdleResource.Memory {
+			IdleNodes[nodeName] = node
+			glog.Infof("Update %s : %s %v", cluster.Id, node.Name, node.IdleResource)
+		}
 	}
-	glog.Info("idleResource:", idleResource)
-	clustersIdleRes[cluster.Id] = cluster.IdleResource
 }
 
 func DispatchPods(pendingPodCh chan types.InterPod) {
@@ -106,11 +103,15 @@ func Schedule() {
 
 func schedulePod(pod types.InterPod) {
 	for {
-		for clusterId, res := range clustersIdleRes {
-			if res.Memory >= pod.RequestMemory && res.MilliCpu >= pod.RequestMilliCpu {
-				uploadResult(pod.Pod, clustersInfo[pod.ClusterId].Ip, clustersInfo[clusterId].Ip)
-				fixContributedResource(pod, clusterId)
-				glog.Infof("Successfully schedule %s of %s to %s.", pod.Pod.Name, pod.ClusterId, clusterId)
+		for nodeName, node := range IdleNodes {
+			if node.IdleResource.Memory >= pod.RequestMemory && node.IdleResource.Memory >= pod.RequestMilliCpu {
+				uploadResult(pod.Pod, clustersInfo[pod.ClusterId].Ip, clustersInfo[node.ClusterId].Ip)
+				fixContributedResource(pod, node.ClusterId)
+				glog.Infof("Successfully schedule %s of %s to %s.", pod.Pod.Name, pod.ClusterId, node.ClusterId)
+				node.IdleResource.Memory -= pod.RequestMemory
+				node.IdleResource.MilliCpu -= pod.RequestMilliCpu
+				IdleNodes[nodeName] = node
+				glog.Infof("Update %s : %s %v", node.ClusterId, node.Name, node.IdleResource)
 				return
 			}
 			time.Sleep(3 * time.Second)

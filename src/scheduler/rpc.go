@@ -112,13 +112,33 @@ func RegisterCluster() {
 func Heartbeat() {
 	for {
 		nodes := getNodes()
-		var idleResource types.Resource
+		var mostCpuNode, mostMemoryNode types.InterNode
+		var mostCpu, mostMemory int64
+		mostCpu = 0
+		mostMemory = 0
 		for _, node := range nodes {
 			allocatedRes := allocatedResource[node.Name]
-			idleResource.MilliCpu += node.MilliCpu - allocatedRes.MilliCpu
-			idleResource.Memory += node.Memory - allocatedRes.Memory
+			idleCpu := node.MilliCpu - allocatedRes.MilliCpu
+			idleMemory := node.Memory - allocatedRes.Memory
+			if idleCpu > mostCpu {
+				mostCpuNode.Node = node
+				mostCpuNode.IdleResource.Memory = idleMemory
+				mostCpuNode.IdleResource.MilliCpu = idleCpu
+			}
+			if idleMemory > mostMemory {
+				mostMemoryNode.Node = node
+				mostCpuNode.IdleResource.Memory = idleMemory
+				mostCpuNode.IdleResource.MilliCpu = idleCpu
+			}
 		}
-		cluster := types.Cluster{Id: clusterId, IdleResource: idleResource}
+		idleNodes := make([]types.InterNode, 2)
+		mostCpuNode.ClusterId = clusterId
+		idleNodes = append(idleNodes, mostCpuNode)
+		if mostCpuNode.Node.Name != mostMemoryNode.Node.Name {
+			mostMemoryNode.ClusterId = clusterId
+			idleNodes = append(idleNodes, mostMemoryNode)
+		}
+		cluster := types.Cluster{Id: clusterId, IdleNodes: idleNodes}
 		var reply int
 		err := client.Call("Server.Heartbeat", cluster, &reply)
 		if err != nil {

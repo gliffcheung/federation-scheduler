@@ -35,7 +35,6 @@ func (t *Server) RegisterCluster(cluster *types.Cluster, reply *int) error {
 
 func (t *Server) Heartbeat(cluster *types.Cluster, reply *int) error {
 	scheduler.UpdateCluster(*cluster)
-	glog.Info("Update cluster:", cluster)
 	*reply = 1
 	return nil
 }

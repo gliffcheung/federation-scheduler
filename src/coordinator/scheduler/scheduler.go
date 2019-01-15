@@ -104,7 +104,7 @@ func Schedule() {
 func schedulePod(pod types.InterPod) {
 	for {
 		for nodeName, node := range IdleNodes {
-			if node.IdleResource.Memory >= pod.RequestMemory && node.IdleResource.Memory >= pod.RequestMilliCpu {
+			if node.IdleResource.Memory >= pod.RequestMemory && node.IdleResource.MilliCpu >= pod.RequestMilliCpu {
 				uploadResult(pod.Pod, clustersInfo[pod.ClusterId].Ip, clustersInfo[node.ClusterId].Ip)
 				fixContributedResource(pod, node.ClusterId)
 				glog.Infof("Successfully schedule %s of %s to %s.", pod.Pod.Name, pod.ClusterId, node.ClusterId)

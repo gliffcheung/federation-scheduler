@@ -299,7 +299,7 @@ func WatchPods() {
 					}
 				}
 			case "MODIFIED":
-				if statusPhase == v1.PodSucceeded {
+				if statusPhase == v1.PodSucceeded && pod.DeletionTimestamp == nil {
 					// Finished.
 					deletedPodCh <- newPod
 					glog.Info("deletedPodCh <- ", newPod)

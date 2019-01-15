@@ -27,8 +27,8 @@ func init() {
 type Server int
 
 func (t *Server) RegisterCluster(cluster *types.Cluster, reply *int) error {
+	glog.Infof("Register cluster:%s, ip:%s, totalResource:%v", cluster.Id, cluster.Ip, cluster.TotalResource)
 	scheduler.RegisterCluster(*cluster)
-	glog.Info("Register cluster:", cluster)
 	*reply = 1
 	return nil
 }

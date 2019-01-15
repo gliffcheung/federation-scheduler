@@ -87,20 +87,13 @@ func Schedule() {
 }
 
 func schedulePod(pod types.Pod) {
-	tryTimes := 0
-	for {
-		nodes := getNodes()
-		for _, node := range nodes {
-			res := allocatedResource[node.Name]
-			if res.MilliCpu+pod.RequestMilliCpu <= node.MilliCpu && res.Memory+pod.RequestMemory <= node.Memory {
-				schedulePodToNode(pod, node)
-				return
-			}
-		}
-		time.Sleep(3 * time.Second)
-		tryTimes += 1
-		if tryTimes == 3 {
-			break
+	nodes := getNodes()
+	for _, node := range nodes {
+		res := allocatedResource[node.Name]
+		if res.MilliCpu+pod.RequestMilliCpu <= node.MilliCpu && res.Memory+pod.RequestMemory <= node.Memory {
+			schedulePodToNode(pod, node)
+			Heartbeat()
+			return
 		}
 	}
 	// if cluster doesn't have enough resourse, outsource the pod.

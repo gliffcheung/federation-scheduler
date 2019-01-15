@@ -122,11 +122,13 @@ func Heartbeat() {
 			mostCpuNode.Node = node
 			mostCpuNode.IdleResource.Memory = idleMemory
 			mostCpuNode.IdleResource.MilliCpu = idleCpu
+			mostCpu = idleCpu
 		}
 		if idleMemory > mostMemory {
 			mostMemoryNode.Node = node
-			mostCpuNode.IdleResource.Memory = idleMemory
-			mostCpuNode.IdleResource.MilliCpu = idleCpu
+			mostMemoryNode.IdleResource.Memory = idleMemory
+			mostMemoryNode.IdleResource.MilliCpu = idleCpu
+			mostMemory = idleMemory
 		}
 	}
 	idleNodes := make([]types.InterNode, 0)

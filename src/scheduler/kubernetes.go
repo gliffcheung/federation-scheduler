@@ -193,11 +193,6 @@ func createPod(outsourcePod types.OutsourcePod) error {
 		},
 	}
 	_, err := clientset.CoreV1().Pods("other-clusters").Create(newPod)
-	if err != nil {
-		glog.Error(err)
-	} else {
-		glog.Info("create pod:", newPod)
-	}
 	return err
 }
 
@@ -208,6 +203,7 @@ func updateAllocatedResource() {
 		res.MilliCpu -= pod.RequestMilliCpu
 		res.Memory -= pod.RequestMemory
 		allocatedResource[nodeName] = res
+		Heartbeat()
 		glog.Info("---------", nodeName, ":", res)
 	}
 }

@@ -27,7 +27,7 @@ type Server int
 func (t *Server) CreatePod(outsourcePod *types.OutsourcePod, reply *int) error {
 	err := createPod(*outsourcePod)
 	if err == nil {
-		glog.Info("CreatePod:", outsourcePod.Pod)
+		glog.Info("CreatePod:", outsourcePod.Pod.Name)
 	} else {
 		glog.Error(err)
 	}

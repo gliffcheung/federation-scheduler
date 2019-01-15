@@ -159,7 +159,10 @@ func deletePodByName(podName, namespace string) error {
 
 func createPod(outsourcePod types.OutsourcePod) error {
 	pod := outsourcePod.Pod
-	podName := outsourcePod.ClusterId + "-" + pod.Name
+	podName := pod.Name
+	if outsourcePod.ClusterId != clusterId {
+		podName = outsourcePod.ClusterId + "-" + pod.Name
+	}
 	otherClustersPod[podName] = outsourcePod.SourceIP
 	containers := make([]v1.Container, 0)
 	resourceList := make(map[v1.ResourceName]resource.Quantity)

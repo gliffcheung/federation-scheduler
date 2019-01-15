@@ -3,6 +3,7 @@ package scheduler
 import (
 	"os"
 	"strconv"
+	"strings"
 	"types"
 
 	"github.com/golang/glog"
@@ -10,7 +11,7 @@ import (
 )
 
 var (
-	podInfo        map[string]v1.Pod
+	podInfo        map[string]v1.Pod // local pod
 	executeResultQ chan types.ExecuteResult
 	//userConsumeResource map[string]types.Resource
 )
@@ -28,9 +29,10 @@ func HandleExecuteResult() {
 	}
 	var content string
 	for result := range executeResultQ {
-		stamp := podInfo[result.Name].CreationTimestamp
+		podName := result.Name[strings.IndexAny(result.Name, "-")+1:]
+		stamp := podInfo[podName].CreationTimestamp
 		waitTime := result.StartTime - stamp.ProtoTime().Seconds
-		content = podInfo[result.Name].Namespace + "," + result.Name + "," + strconv.FormatInt(result.RequestMemory, 10) + "," +
+		content = podInfo[podName].Namespace + "," + podName + "," + strconv.FormatInt(result.RequestMemory, 10) + "," +
 			strconv.FormatInt(result.RequestMilliCpu, 10) + "," + strconv.FormatInt(waitTime, 10) + "\n"
 		buf := []byte(content)
 		fd.Write(buf)

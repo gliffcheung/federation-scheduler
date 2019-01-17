@@ -72,8 +72,8 @@ func Schedule() {
 				glog.Info("=============================")
 				glog.Info("Before Schedule()")
 				printShare()
-				schedulePod(firstPod)
-				topUser.Priority = fixUserShare(topUser.Uid, firstPod)
+				weight := schedulePod(firstPod)
+				topUser.Priority = fixUserShare(firstPod, weight)
 				heap.Push(&usersPriorityQ, topUser)
 				glog.Info("After Schedule()")
 				printShare()
@@ -86,17 +86,18 @@ func Schedule() {
 	}
 }
 
-func schedulePod(pod types.Pod) {
+func schedulePod(pod types.Pod) float64 {
 	nodes := getNodes()
 	for _, node := range nodes {
 		res := allocatedResource[node.Name]
 		if res.MilliCpu+pod.RequestMilliCpu <= node.MilliCpu && res.Memory+pod.RequestMemory <= node.Memory {
 			schedulePodToNode(pod, node)
 			Heartbeat()
-			return
+			return 0
 		}
 	}
 	// if cluster doesn't have enough resourse, outsource the pod.
-	UploadPod(pod)
+	weight := UploadPod(pod)
 	deletePodByName(pod.Name, pod.Uid)
+	return weight
 }

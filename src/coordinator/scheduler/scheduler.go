@@ -16,7 +16,7 @@ var (
 	clustersPodsQ     map[string]chan types.InterPod
 	clustersInfo      map[string]types.Cluster
 	IdleNodes         map[string]types.InterNode
-	totalResource     types.Resource
+	TotalResource     types.Resource
 )
 
 func init() {
@@ -28,11 +28,14 @@ func init() {
 }
 
 func RegisterCluster(cluster types.Cluster) {
+	var res types.Resource
+	allocatedResource[cluster.Id] = res
+	contributedResource[cluster.Id] = res
 	clustersShare[cluster.Id] = 0
 	clustersInfo[cluster.Id] = cluster
-	totalResource.Memory += cluster.TotalResource.Memory
-	totalResource.MilliCpu += cluster.TotalResource.MilliCpu
-	glog.Info("totalResource:", totalResource)
+	TotalResource.Memory += cluster.TotalResource.Memory
+	TotalResource.MilliCpu += cluster.TotalResource.MilliCpu
+	glog.Info("TotalResource:", TotalResource)
 }
 
 func UpdateCluster(cluster types.Cluster) {

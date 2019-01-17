@@ -39,10 +39,10 @@ func (t *Server) Heartbeat(cluster *types.Cluster, reply *int) error {
 	return nil
 }
 
-func (t *Server) UploadPod(pod *types.InterPod, reply *int) error {
+func (t *Server) UploadPod(pod *types.InterPod, reply *float64) error {
 	pendingPodCh <- *pod
-	glog.Info("UploadPod:", pod)
-	*reply = 1
+	*reply = scheduler.Max(float64(pod.RequestMilliCpu)/float64(scheduler.TotalResource.MilliCpu), float64(pod.RequestMemory)/float64(scheduler.TotalResource.Memory))
+	glog.Infof("UploadPod:%v, reply:%f", *pod, *reply)
 	return nil
 }
 

@@ -14,7 +14,7 @@ const (
 	serverAddress = "localhost"
 	serverPort    = "1234"
 	clusterId     = "cluster1"
-	clientAddress = "8.8.8.8"
+	clientAddress = "localhost"
 	clientPort    = "4321"
 )
 
@@ -147,13 +147,14 @@ func Heartbeat() {
 	}
 }
 
-func UploadPod(pod types.Pod) {
+func UploadPod(pod types.Pod) float64 {
 	interPod := &types.InterPod{Pod: pod, ClusterId: clusterId}
-	var reply int
+	var reply float64
 	err := client.Call("Server.UploadPod", interPod, &reply)
 	if err != nil {
 		glog.Info(err)
 	}
+	return reply
 }
 
 func ReturnExecuteResult(result types.ExecuteResult) {

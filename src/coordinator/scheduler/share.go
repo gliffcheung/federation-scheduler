@@ -20,6 +20,8 @@ func init() {
 
 func printShare() {
 	for k, v := range clustersShare {
+		glog.Infof("%s's allocated resource:%v", k, allocatedResource[k])
+		glog.Infof("%s's contributed resource:%v", k, contributedResource[k])
 		glog.Infof("%s's dominant share:%.2f", k, v)
 	}
 }
@@ -37,17 +39,10 @@ func fixClusterShare(pod types.InterPod) float64 {
 }
 
 func fixContributedResource(pod types.InterPod, clusterId string) {
-	var res types.Resource
-	res, ok := contributedResource[pod.ClusterId]
-	if ok {
-		res.MilliCpu += pod.Pod.RequestMilliCpu
-		res.Memory += pod.Pod.RequestMemory
-		contributedResource[pod.ClusterId] = res
-	} else {
-		res.MilliCpu = pod.Pod.RequestMilliCpu
-		res.Memory = pod.Pod.RequestMemory
-		contributedResource[pod.ClusterId] = res
-	}
+	res := contributedResource[clusterId]
+	res.MilliCpu += pod.RequestMilliCpu
+	res.Memory += pod.RequestMemory
+	contributedResource[clusterId] = res
 }
 
 func getClusterShare(id string) float64 {

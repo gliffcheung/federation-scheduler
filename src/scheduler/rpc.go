@@ -16,6 +16,7 @@ const (
 	clusterId     = "cluster1"
 	clientAddress = "localhost"
 	clientPort    = "4321"
+	local         = true
 )
 
 var (

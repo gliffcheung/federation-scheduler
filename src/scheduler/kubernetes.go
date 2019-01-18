@@ -257,6 +257,12 @@ func schedulePodToNode(pod types.Pod, node types.Node) {
 	allocatedResource[node.Name] = res
 	glog.Info("+++++++++", node.Name, ":", res)
 	glog.Infof("Successfully schedule %s to %s", pod.Name, node.Name)
+	executeData := types.ExecuteData{
+		Pod:         pod,
+		CurrentTime: time.Now().Unix(),
+		Status:      "running",
+	}
+	executeDataQ <- executeData
 }
 
 func WatchPods() {
@@ -298,12 +304,6 @@ func WatchPods() {
 					if pod.Namespace != "other-clusters" {
 						podInfo[pod.Name] = *pod
 					}
-					executeData := types.ExecuteData{
-						Pod:         newPod,
-						CurrentTime: time.Now().Unix(),
-						Status:      "running",
-					}
-					executeDataQ <- executeData
 				}
 			case "MODIFIED":
 				if statusPhase == v1.PodSucceeded && pod.DeletionTimestamp == nil {

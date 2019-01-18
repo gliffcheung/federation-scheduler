@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/golang/glog"
 
@@ -297,16 +298,22 @@ func WatchPods() {
 					if pod.Namespace != "other-clusters" {
 						podInfo[pod.Name] = *pod
 					}
+					executeData := types.ExecuteData{
+						Pod:         newPod,
+						CurrentTime: time.Now().Unix(),
+						Status:      "running",
+					}
+					executeDataQ <- executeData
 				}
 			case "MODIFIED":
 				if statusPhase == v1.PodSucceeded && pod.DeletionTimestamp == nil {
 					// Finished.
 					deletedPodCh <- newPod
 					glog.Info("deletedPodCh <- ", newPod)
-					// Return executeResult
+					// Return ScheduleData
 					createTime := pod.CreationTimestamp.ProtoTime().Seconds
 					startTime := pod.Status.StartTime.ProtoTime().Seconds
-					executeResult := types.ExecuteResult{
+					scheduleData := types.ScheduleData{
 						Pod:        newPod,
 						CreateTime: int64(createTime),
 						StartTime:  int64(startTime),
@@ -314,10 +321,16 @@ func WatchPods() {
 					}
 					_, ok := otherClustersPod[pod.Name]
 					if !ok {
-						executeResultQ <- executeResult
+						scheduleDataQ <- scheduleData
 					} else {
-						ReturnExecuteResult(executeResult)
+						ReturnScheduleData(scheduleData)
 					}
+					executeData := types.ExecuteData{
+						Pod:         newPod,
+						CurrentTime: time.Now().Unix(),
+						Status:      "finish",
+					}
+					executeDataQ <- executeData
 				}
 			case "DELETED":
 				if statusPhase == v1.PodRunning {

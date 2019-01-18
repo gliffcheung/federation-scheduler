@@ -76,15 +76,22 @@ type ScheduleResult struct {
 	DestIp string
 }
 
-type ExecuteResult struct {
+type ScheduleData struct {
 	Pod
 	CreateTime int64
 	StartTime  int64
 	Status     string
 }
 
-type PodResult struct {
+type ExecuteData struct {
 	Pod
-	CreateTime string
-	FinishTime string
+	CurrentTime int64
+	Status      string
+}
+
+type UserData struct {
+	Uid         string
+	CurrentTime int64
+	Share       float64
+	Resource
 }

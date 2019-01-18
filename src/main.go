@@ -18,6 +18,6 @@ func main() {
 	scheduler.RpcInit()
 	go scheduler.DispatchPods()
 	go scheduler.Schedule()
-	go scheduler.HandleExecuteResult()
+	go scheduler.HandleData()
 	scheduler.WatchPods()
 }

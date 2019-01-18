@@ -78,6 +78,13 @@ func Schedule() {
 				glog.Info("After Schedule()")
 				printShare()
 				glog.Info("=============================")
+				userData := types.UserData{
+					Uid:         firstPod.Uid,
+					CurrentTime: time.Now().Unix(),
+					Share:       topUser.Priority,
+					Resource:    usersAllocatedRes[firstPod.Uid],
+				}
+				userDataQ <- userData
 			default:
 				usersPresent[topUser.Uid] = false
 			}

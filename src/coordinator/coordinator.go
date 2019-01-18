@@ -63,5 +63,6 @@ func main() {
 	}
 	go http.Serve(listener, nil)
 	go scheduler.DispatchPods(pendingPodCh)
+	go scheduler.HandleClusterData()
 	scheduler.Schedule()
 }

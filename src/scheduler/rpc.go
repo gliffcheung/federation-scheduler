@@ -68,8 +68,8 @@ func (t *Server) ReturnScheduleResult(result *types.ScheduleResult, reply *int) 
 	return err
 }
 
-func (t *Server) ReturnExecuteResult(result *types.ExecuteResult, reply *int) error {
-	executeResultQ <- *result
+func (t *Server) ReturnScheduleData(result *types.ScheduleData, reply *int) error {
+	scheduleDataQ <- *result
 	*reply = 1
 	return nil
 }
@@ -157,7 +157,7 @@ func UploadPod(pod types.Pod) float64 {
 	return reply
 }
 
-func ReturnExecuteResult(result types.ExecuteResult) {
+func ReturnScheduleData(result types.ScheduleData) {
 	// connect to otherCluster
 	var err error
 	clusterIp := otherClustersPod[result.Pod.Name]
@@ -167,7 +167,7 @@ func ReturnExecuteResult(result types.ExecuteResult) {
 	}
 
 	var reply int
-	err = cli.Call("Server.ReturnExecuteResult", &result, &reply)
+	err = cli.Call("Server.ReturnScheduleData", &result, &reply)
 	if err != nil {
 		glog.Info(err)
 	}

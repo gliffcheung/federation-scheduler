@@ -104,7 +104,7 @@ func schedulePod(pod types.Pod) float64 {
 				return 0
 			}
 		}
-		if local {
+		if local == false {
 			// if cluster doesn't have enough resourse, outsource the pod.
 			weight := UploadPod(pod)
 			deletePodByName(pod.Name, pod.Uid)

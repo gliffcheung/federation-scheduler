@@ -41,12 +41,14 @@ func HandleScheduleData() {
 		glog.Error()
 	}
 	var content string
+	var totalWaitTime int64
+	totalWaitTime = 0
 	for data := range scheduleDataQ {
 		podName := data.Name[strings.IndexAny(data.Name, "-")+1:]
 		stamp := podInfo[podName].CreationTimestamp
 		waitTime := data.StartTime - stamp.ProtoTime().Seconds
-		content = podInfo[podName].Namespace + "," + podName + "," + strconv.FormatInt(data.RequestMemory, 10) + "," +
-			strconv.FormatInt(data.RequestMilliCpu, 10) + "," + strconv.FormatInt(waitTime, 10) + "\n"
+		totalWaitTime += waitTime
+		content = podInfo[podName].Namespace + "," + strconv.FormatInt(time.Now().Unix()-startTime, 10) + "," + strconv.FormatInt(totalWaitTime, 10) + "\n"
 		buf := []byte(content)
 		fd.Write(buf)
 	}

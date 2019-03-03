@@ -15,7 +15,8 @@ var (
 	clustersActiveQ   chan string
 	clustersPodsQ     map[string]chan types.InterPod
 	clustersInfo      map[string]types.Cluster
-	IdleNodes         map[string]types.InterNode
+	IdleResource      map[string]types.Resource
+	ShareOrNot        map[string]bool
 	TotalResource     types.Resource
 )
 
@@ -24,7 +25,8 @@ func init() {
 	clustersActiveQ = make(chan string, 10)
 	clustersPodsQ = make(map[string]chan types.InterPod)
 	clustersInfo = make(map[string]types.Cluster)
-	IdleNodes = make(map[string]types.InterNode)
+	IdleResource = make(map[string]types.Resource)
+	ShareOrNot = make(map[string]bool)
 }
 
 func RegisterCluster(cluster types.Cluster) {
@@ -39,14 +41,9 @@ func RegisterCluster(cluster types.Cluster) {
 }
 
 func UpdateCluster(cluster types.Cluster) {
-	for _, node := range cluster.IdleNodes {
-		nodeName := cluster.Id + node.Name
-		idleNode, ok := IdleNodes[nodeName]
-		if !ok || idleNode.IdleResource.MilliCpu != node.IdleResource.MilliCpu || idleNode.IdleResource.Memory != node.IdleResource.Memory {
-			IdleNodes[nodeName] = node
-			glog.Infof("Update %s : %s %v", cluster.Id, node.Name, node.IdleResource)
-		}
-	}
+	IdleResource[cluster.Id] = cluster.IdleResource
+	ShareOrNot[cluster.Id] = cluster.Share
+	glog.Infof("Update %s %v share:%t", cluster.Id, cluster.IdleResource, cluster.Share)
 }
 
 func DispatchPods(pendingPodCh chan types.InterPod) {
@@ -110,37 +107,44 @@ func Schedule() {
 				clustersPresent[topCluster.Id] = false
 			}
 		}
-		time.Sleep(3 * time.Second)
+		time.Sleep(time.Second)
 	}
 }
 
 func schedulePod(pod types.InterPod) string {
-	for {
-		for nodeName, node := range IdleNodes {
-			if node.IdleResource.Memory >= pod.RequestMemory && node.IdleResource.MilliCpu >= pod.RequestMilliCpu {
-				uploadResult(pod.Pod, clustersInfo[pod.ClusterId].Ip, clustersInfo[node.ClusterId].Ip)
-				glog.Infof("Successfully schedule %s of %s to %s.", pod.Name, pod.ClusterId, node.ClusterId)
-				node.IdleResource.Memory -= pod.RequestMemory
-				node.IdleResource.MilliCpu -= pod.RequestMilliCpu
-				IdleNodes[nodeName] = node
-				glog.Infof("Update %s : %s %v", node.ClusterId, node.Name, node.IdleResource)
-				return node.ClusterId
-			}
+	var idleMemory, idleCpu int64
+	var destClusterId string
+	idleMemory = 0
+	idleCpu = 0
+	destClusterId = ""
+	for clusterId, share := range ShareOrNot {
+		if share == true && IdleResource[clusterId].Memory > idleMemory && IdleResource[clusterId].MilliCpu > idleCpu {
+			idleMemory = IdleResource[clusterId].Memory
+			idleCpu = IdleResource[clusterId].MilliCpu
+			destClusterId = clusterId
 		}
-		clusterId := pod.ClusterId
-		share := clustersShare[clusterId]
-		destClusterId := clusterId
-		minShare := share
-		for c, s := range clustersShare {
-			if s < minShare {
-				minShare = s
-				destClusterId = c
-			}
-		}
+	}
+	if destClusterId != "" {
+		memory := IdleResource[destClusterId].Memory - pod.RequestMemory
+		cpu := IdleResource[destClusterId].MilliCpu - pod.RequestMilliCpu
+		IdleResource[destClusterId] = types.Resource{Memory: memory, MilliCpu: cpu}
 		uploadResult(pod.Pod, clustersInfo[pod.ClusterId].Ip, clustersInfo[destClusterId].Ip)
 		glog.Infof("Successfully schedule %s of %s to %s.", pod.Name, pod.ClusterId, destClusterId)
 		return destClusterId
 	}
+	clusterId := pod.ClusterId
+	share := clustersShare[clusterId]
+	destClusterId = clusterId
+	minShare := share
+	for c, s := range clustersShare {
+		if s < minShare {
+			minShare = s
+			destClusterId = c
+		}
+	}
+	uploadResult(pod.Pod, clustersInfo[pod.ClusterId].Ip, clustersInfo[destClusterId].Ip)
+	glog.Infof("Successfully schedule %s of %s to %s.", pod.Name, pod.ClusterId, destClusterId)
+	return destClusterId
 }
 
 func uploadResult(pod types.Pod, sourceIp, destIp string) {

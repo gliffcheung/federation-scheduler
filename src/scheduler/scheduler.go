@@ -88,7 +88,11 @@ func Schedule() {
 			default:
 				usersPresent[topUser.Uid] = false
 			}
+			share = false
+		} else {
+			share = true
 		}
+		Heartbeat()
 		time.Sleep(time.Second)
 	}
 }

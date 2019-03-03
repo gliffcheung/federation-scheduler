@@ -33,7 +33,7 @@ func fixClusterShare(pod types.InterPod) float64 {
 	allocatedResource[pod.ClusterId] = allocRes
 	contRes := contributedResource[pod.ClusterId]
 	dominantContribution := Max(float64(contRes.MilliCpu)/float64(TotalResource.MilliCpu), float64(contRes.Memory)/float64(TotalResource.Memory))
-	dominantShare := Max(float64(allocRes.MilliCpu)/float64(TotalResource.MilliCpu), float64(allocRes.Memory)/float64(TotalResource.Memory)) / (1 + dominantContribution)
+	dominantShare := Max(float64(allocRes.MilliCpu)/float64(TotalResource.MilliCpu), float64(allocRes.Memory)/float64(TotalResource.Memory)) - dominantContribution
 	clustersShare[pod.ClusterId] = dominantShare
 	return dominantShare
 }

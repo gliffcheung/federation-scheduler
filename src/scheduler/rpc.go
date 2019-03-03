@@ -16,11 +16,12 @@ const (
 	clusterId     = "cluster1"
 	clientAddress = "localhost"
 	clientPort    = "4321"
-	local         = true
+	local         = false
 )
 
 var (
 	client *rpc.Client
+	share  = true
 )
 
 type Server int
@@ -112,35 +113,15 @@ func RegisterCluster() {
 
 func Heartbeat() {
 	nodes := getNodes()
-	var mostCpuNode, mostMemoryNode types.InterNode
-	var mostCpu, mostMemory int64
-	mostCpu = 0
-	mostMemory = 0
+	var idleResource types.Resource
 	for _, node := range nodes {
 		allocatedRes := allocatedResource[node.Name]
 		idleCpu := node.MilliCpu - allocatedRes.MilliCpu
 		idleMemory := node.Memory - allocatedRes.Memory
-		if idleCpu > mostCpu {
-			mostCpuNode.Node = node
-			mostCpuNode.IdleResource.Memory = idleMemory
-			mostCpuNode.IdleResource.MilliCpu = idleCpu
-			mostCpu = idleCpu
-		}
-		if idleMemory > mostMemory {
-			mostMemoryNode.Node = node
-			mostMemoryNode.IdleResource.Memory = idleMemory
-			mostMemoryNode.IdleResource.MilliCpu = idleCpu
-			mostMemory = idleMemory
-		}
+		idleResource.MilliCpu += idleCpu
+		idleResource.Memory += idleMemory
 	}
-	idleNodes := make([]types.InterNode, 0)
-	mostCpuNode.ClusterId = clusterId
-	idleNodes = append(idleNodes, mostCpuNode)
-	if mostCpuNode.Node.Name != mostMemoryNode.Node.Name {
-		mostMemoryNode.ClusterId = clusterId
-		idleNodes = append(idleNodes, mostMemoryNode)
-	}
-	cluster := types.Cluster{Id: clusterId, IdleNodes: idleNodes}
+	cluster := types.Cluster{Id: clusterId, IdleResource: idleResource, Share: share}
 	var reply int
 	err := client.Call("Server.Heartbeat", cluster, &reply)
 	if err != nil {

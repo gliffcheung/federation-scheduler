@@ -16,7 +16,8 @@ type Cluster struct {
 	Ip               string
 	ContributedShare float64
 	TotalResource    Resource
-	IdleNodes        []InterNode
+	IdleResource     Resource
+	Share            bool
 }
 
 type InterNode struct {

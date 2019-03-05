@@ -99,10 +99,10 @@ func Schedule() {
 				printShare()
 				glog.Info("=============================")
 				clusterData := types.UserData{
-					Uid:         firstPod.Uid,
+					Uid:         topCluster.Id,
 					CurrentTime: time.Now().Unix(),
 					Share:       topCluster.Priority,
-					Resource:    allocatedResource[firstPod.Uid],
+					Resource:    allocatedResource[topCluster.Id],
 				}
 				clusterDataQ <- clusterData
 			default:

@@ -41,9 +41,11 @@ func RegisterCluster(cluster types.Cluster) {
 }
 
 func UpdateCluster(cluster types.Cluster) {
+	if IdleResource[cluster.Id] != cluster.IdleResource || ShareOrNot[cluster.Id] != cluster.Share {
+		glog.Infof("Update %s %v share:%t", cluster.Id, cluster.IdleResource, cluster.Share)
+	}
 	IdleResource[cluster.Id] = cluster.IdleResource
 	ShareOrNot[cluster.Id] = cluster.Share
-	glog.Infof("Update %s %v share:%t", cluster.Id, cluster.IdleResource, cluster.Share)
 }
 
 func DispatchPods(pendingPodCh chan types.InterPod) {
@@ -114,8 +116,8 @@ func Schedule() {
 func schedulePod(pod types.InterPod) string {
 	var idleMemory, idleCpu int64
 	var destClusterId string
-	idleMemory = 0
-	idleCpu = 0
+	idleMemory = pod.RequestMemory
+	idleCpu = pod.RequestMilliCpu
 	destClusterId = ""
 	for clusterId, share := range ShareOrNot {
 		if share == true && IdleResource[clusterId].Memory > idleMemory && IdleResource[clusterId].MilliCpu > idleCpu {
@@ -135,10 +137,10 @@ func schedulePod(pod types.InterPod) string {
 	clusterId := pod.ClusterId
 	share := clustersShare[clusterId]
 	destClusterId = clusterId
-	minShare := share
+	maxShare := share
 	for c, s := range clustersShare {
-		if s < minShare {
-			minShare = s
+		if s > maxShare {
+			maxShare = s
 			destClusterId = c
 		}
 	}

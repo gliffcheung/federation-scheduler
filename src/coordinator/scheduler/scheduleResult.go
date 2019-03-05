@@ -20,7 +20,7 @@ func init() {
 }
 
 func HandleClusterData() {
-	filename := "../federationData.csv"
+	filename := "../../federationData.csv"
 	fd, err := os.OpenFile(filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
 		glog.Error()

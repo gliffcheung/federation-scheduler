@@ -18,6 +18,7 @@ var (
 	userDataQ           chan types.UserData
 	startTime           int64
 	usedCpu, usedMemory int64
+	totalWaitTime       map[string]int64
 )
 
 func init() {
@@ -26,6 +27,7 @@ func init() {
 	executeDataQ = make(chan types.ExecuteData, 10)
 	userDataQ = make(chan types.UserData, 10)
 	startTime = time.Now().Unix()
+	totalWaitTime = make(map[string]int64)
 }
 
 func HandleData() {
@@ -41,14 +43,14 @@ func HandleScheduleData() {
 		glog.Error()
 	}
 	var content string
-	var totalWaitTime int64
-	totalWaitTime = 0
 	for data := range scheduleDataQ {
 		podName := data.Name[strings.IndexAny(data.Name, "-")+1:]
 		stamp := podInfo[podName].CreationTimestamp
 		waitTime := data.StartTime - stamp.ProtoTime().Seconds
-		totalWaitTime += waitTime
-		content = podInfo[podName].Namespace + "," + strconv.FormatInt(time.Now().Unix()-startTime, 10) + "," + strconv.FormatInt(totalWaitTime, 10) + "\n"
+		totalWT := totalWaitTime[podInfo[podName].Namespace]
+		totalWT += waitTime
+		totalWaitTime[podInfo[podName].Namespace] = totalWT
+		content = podInfo[podName].Namespace + "," + strconv.FormatInt(time.Now().Unix()-startTime, 10) + "," + strconv.FormatInt(totalWT, 10) + "\n"
 		buf := []byte(content)
 		fd.Write(buf)
 	}

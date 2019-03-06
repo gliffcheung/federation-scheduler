@@ -20,7 +20,7 @@ func init() {
 	usersPresent = make(map[string]bool)
 	usersActiveQ = make(chan string, 10)
 	usersPodsQ = make(map[string]chan types.Pod)
-	highPriorityCh = make(chan types.Pod, 10)
+	highPriorityCh = make(chan types.Pod, 500)
 }
 
 func DispatchPods() {

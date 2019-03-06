@@ -28,8 +28,8 @@ var (
 func init() {
 	allocatedResource = make(map[string]types.Resource)
 	availableNodes = make([]types.Node, 0)
-	pendingPodCh = make(chan types.Pod, 10)
-	deletedPodCh = make(chan types.Pod, 10)
+	pendingPodCh = make(chan types.Pod, 500)
+	deletedPodCh = make(chan types.Pod, 500)
 	otherClustersPod = make(map[string]string)
 }
 

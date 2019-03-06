@@ -20,7 +20,7 @@ func init() {
 	usersPresent = make(map[string]bool)
 	usersActiveQ = make(chan string, 10)
 	usersPodsQ = make(map[string]chan types.Pod)
-	highPriorityCh = make(chan types.Pod, 10)
+	highPriorityCh = make(chan types.Pod, 500)
 }
 
 func DispatchPods() {
@@ -42,7 +42,7 @@ func Schedule() {
 		// schedule pod in highPriorityCh at first
 		select {
 		case pod := <-highPriorityCh:
-			schedulePod(pod)
+			schedulePod(pod, false)
 			continue
 		default:
 		}
@@ -72,7 +72,7 @@ func Schedule() {
 				glog.Info("=============================")
 				glog.Info("Before Schedule()")
 				printShare()
-				weight := schedulePod(firstPod)
+				weight := schedulePod(firstPod, true)
 				topUser.Priority = fixUserShare(firstPod, weight)
 				heap.Push(&usersPriorityQ, topUser)
 				glog.Info("After Schedule()")
@@ -97,7 +97,7 @@ func Schedule() {
 	}
 }
 
-func schedulePod(pod types.Pod) float64 {
+func schedulePod(pod types.Pod, outsource bool) float64 {
 	for {
 		nodes := getNodes()
 		for _, node := range nodes {
@@ -108,7 +108,7 @@ func schedulePod(pod types.Pod) float64 {
 				return 0
 			}
 		}
-		if local == false {
+		if local == false && outsource == true {
 			// if cluster doesn't have enough resourse, outsource the pod.
 			weight := UploadPod(pod)
 			deletePodByName(pod.Name, pod.Uid)

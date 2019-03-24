@@ -50,7 +50,8 @@ func HandleScheduleData() {
 		totalWaitTime += waitTime
 		content = strconv.FormatInt(time.Now().Unix()-startTime, 10) + "," + podInfo[podName].Namespace + "," + podName +
 			"," + strconv.FormatInt(stamp.ProtoTime().Seconds, 10) + "," + strconv.FormatInt(data.CreateTime, 10) +
-			"," + strconv.FormatInt(data.StartTime, 10) + "," + strconv.FormatInt(totalWaitTime, 10) + "\n"
+			"," + strconv.FormatInt(data.StartTime, 10) + "," + strconv.FormatInt(waitTime, 10) +
+			"," + strconv.FormatInt(totalWaitTime, 10) + "\n"
 		buf := []byte(content)
 		fd.Write(buf)
 	}

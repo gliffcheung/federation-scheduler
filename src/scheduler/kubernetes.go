@@ -182,6 +182,10 @@ func createPod(outsourcePod types.OutsourcePod) error {
 		}
 		containers = append(containers, container)
 	}
+	ns := "other-clusters"
+	if outsourcePod.ClusterId == clusterId {
+		ns = "this-cluster"
+	}
 	newPod := &v1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -189,7 +193,7 @@ func createPod(outsourcePod types.OutsourcePod) error {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
-			Namespace: "other-clusters",
+			Namespace: ns,
 		},
 		Spec: v1.PodSpec{
 			SchedulerName: pod.Spec.SchedulerName,
@@ -197,7 +201,7 @@ func createPod(outsourcePod types.OutsourcePod) error {
 			Containers:    containers,
 		},
 	}
-	_, err := clientset.CoreV1().Pods("other-clusters").Create(newPod)
+	_, err := clientset.CoreV1().Pods(ns).Create(newPod)
 	return err
 }
 
@@ -295,13 +299,16 @@ func WatchPods() {
 					if pod.Namespace == "other-clusters" && pod.Spec.SchedulerName == "federation-scheduler" {
 						highPriorityCh <- newPod
 						glog.Info("highPriorytyCh <- ", newPod)
+					} else if pod.Namespace == "this-cluster" && pod.Spec.SchedulerName == "federation-scheduler" {
+						secHighPriorityCh <- newPod
+						glog.Info("secHighPriorytyCh <- ", newPod)
 					} else {
 						pendingPodCh <- newPod
 						glog.Info("pendingPodCh <- ", newPod)
 					}
 				}
 				if statusPhase == v1.PodPending && pod.Spec.NodeName == "" {
-					if pod.Namespace != "other-clusters" {
+					if pod.Namespace != "other-clusters" && pod.Namespace != "this-cluster" {
 						podInfo[pod.Name] = *pod
 					}
 				}

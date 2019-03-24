@@ -9,11 +9,12 @@ import (
 )
 
 var (
-	usersPriorityQ types.PriorityQueue
-	usersPresent   map[string]bool //userPresent[Uid] == true means that the Uid has been in usersPriorityQ.
-	usersActiveQ   chan string
-	usersPodsQ     map[string]chan types.Pod
-	highPriorityCh chan types.Pod
+	usersPriorityQ    types.PriorityQueue
+	usersPresent      map[string]bool //userPresent[Uid] == true means that the Uid has been in usersPriorityQ.
+	usersActiveQ      chan string
+	usersPodsQ        map[string]chan types.Pod
+	highPriorityCh    chan types.Pod
+	secHighPriorityCh chan types.Pod
 )
 
 func init() {

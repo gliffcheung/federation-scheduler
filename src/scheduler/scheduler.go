@@ -45,7 +45,6 @@ func Schedule() {
 		select {
 		case pod := <-highPriorityCh:
 			schedulePod(pod, false)
-			Heartbeat()
 			continue
 		default:
 		}
@@ -53,13 +52,10 @@ func Schedule() {
 		// schedule pod in secHighPriorityCh next
 		select {
 		case pod := <-secHighPriorityCh:
-			schedulePod(pod, false)
 			share = false
-			Heartbeat()
+			schedulePod(pod, false)
 			continue
 		default:
-			share = true
-			Heartbeat()
 		}
 
 		// fix usersPriorityQ
@@ -81,6 +77,7 @@ func Schedule() {
 
 		// schedule local pod
 		if len(usersPriorityQ) > 0 {
+			share = false
 			topUser := heap.Pop(&usersPriorityQ).(*types.User)
 			select {
 			case firstPod := <-usersPodsQ[topUser.Uid]:
@@ -103,11 +100,10 @@ func Schedule() {
 			default:
 				usersPresent[topUser.Uid] = false
 			}
-			share = false
 		} else {
 			share = true
+			Heartbeat()
 		}
-		Heartbeat()
 		time.Sleep(time.Second)
 	}
 }

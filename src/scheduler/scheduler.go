@@ -104,7 +104,7 @@ func Schedule() {
 			share = true
 			Heartbeat()
 		}
-		time.Sleep(time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 

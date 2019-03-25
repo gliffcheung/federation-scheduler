@@ -22,6 +22,7 @@ func init() {
 	usersActiveQ = make(chan string, 10)
 	usersPodsQ = make(map[string]chan types.Pod)
 	highPriorityCh = make(chan types.Pod, 500)
+	secHighPriorityCh = make(chan types.Pod, 500)
 }
 
 func DispatchPods() {
@@ -47,6 +48,18 @@ func Schedule() {
 			Heartbeat()
 			continue
 		default:
+		}
+
+		// schedule pod in secHighPriorityCh next
+		select {
+		case pod := <-secHighPriorityCh:
+			schedulePod(pod, false)
+			share = false
+			Heartbeat()
+			continue
+		default:
+			share = true
+			Heartbeat()
 		}
 
 		// fix usersPriorityQ

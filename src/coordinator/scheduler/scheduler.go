@@ -114,15 +114,13 @@ func Schedule() {
 }
 
 func schedulePod(pod types.InterPod) string {
-	var idleMemory, idleCpu int64
 	var destClusterId string
-	idleMemory = pod.RequestMemory
-	idleCpu = pod.RequestMilliCpu
+	var maxProduct int64
+	maxProduct = 0
 	destClusterId = ""
 	for clusterId, share := range ShareOrNot {
-		if share == true && IdleResource[clusterId].Memory > idleMemory && IdleResource[clusterId].MilliCpu > idleCpu {
-			idleMemory = IdleResource[clusterId].Memory
-			idleCpu = IdleResource[clusterId].MilliCpu
+		if share == true && IdleResource[clusterId].Memory*pod.RequestMemory+IdleResource[clusterId].MilliCpu*pod.RequestMilliCpu > maxProduct {
+			maxProduct = IdleResource[clusterId].Memory*pod.RequestMemory + IdleResource[clusterId].MilliCpu*pod.RequestMilliCpu
 			destClusterId = clusterId
 		}
 	}

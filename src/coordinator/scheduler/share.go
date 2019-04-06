@@ -28,8 +28,8 @@ func shareLog() {
 			clusterData := types.UserData{
 				Uid:         k,
 				CurrentTime: time.Now().Unix(),
-				DC:          Max(float64(allocRes.MilliCpu)/float64(TotalResource.MilliCpu), float64(allocRes.Memory)/float64(TotalResource.Memory)),
-				DS:          Max(float64(contRes.MilliCpu)/float64(TotalResource.MilliCpu), float64(contRes.Memory)/float64(TotalResource.Memory)),
+				DS:          Max(float64(allocRes.MilliCpu)/float64(TotalResource.MilliCpu), float64(allocRes.Memory)/float64(TotalResource.Memory)),
+				DC:          Max(float64(contRes.MilliCpu)/float64(TotalResource.MilliCpu), float64(contRes.Memory)/float64(TotalResource.Memory)),
 				Share:       v,
 			}
 			clusterDataQ <- clusterData
@@ -63,6 +63,11 @@ func fixContributedResource(pod types.InterPod, clusterId string) {
 	res.MilliCpu += pod.RequestMilliCpu
 	res.Memory += pod.RequestMemory
 	contributedResource[clusterId] = res
+	allocRes := allocatedResource[clusterId]
+	contRes := contributedResource[clusterId]
+	ds := Max(float64(allocRes.MilliCpu)/float64(TotalResource.MilliCpu), float64(allocRes.Memory)/float64(TotalResource.Memory))
+	dc := Max(float64(contRes.MilliCpu)/float64(TotalResource.MilliCpu), float64(contRes.Memory)/float64(TotalResource.Memory))
+	clustersShare[clusterId] = ds - dc
 }
 
 func getClusterShare(id string) float64 {

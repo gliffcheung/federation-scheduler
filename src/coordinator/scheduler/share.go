@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"time"
 	"types"
 
 	"github.com/golang/glog"
@@ -16,6 +17,25 @@ func init() {
 	allocatedResource = make(map[string]types.Resource)
 	contributedResource = make(map[string]types.Resource)
 	clustersShare = make(map[string]float64)
+	go shareLog()
+}
+
+func shareLog() {
+	for {
+		for k, v := range clustersShare {
+			allocRes := allocatedResource[k]
+			contRes := contributedResource[k]
+			clusterData := types.UserData{
+				Uid:         k,
+				CurrentTime: time.Now().Unix(),
+				DC:          Max(float64(allocRes.MilliCpu)/float64(TotalResource.MilliCpu), float64(allocRes.Memory)/float64(TotalResource.Memory)),
+				DS:          Max(float64(contRes.MilliCpu)/float64(TotalResource.MilliCpu), float64(contRes.Memory)/float64(TotalResource.Memory)),
+				Share:       v,
+			}
+			clusterDataQ <- clusterData
+		}
+		time.Sleep(time.Second)
+	}
 }
 
 func printShare() {

@@ -84,7 +84,7 @@ func RpcInit() {
 		glog.Info(err)
 	}
 	RegisterCluster()
-	Heartbeat(true)
+	Heartbeat(true, false)
 
 	// create server
 	rpc.Register(new(Server))
@@ -100,8 +100,11 @@ func RegisterCluster() {
 	nodes := getNodes()
 	var totalResource types.Resource
 	for _, node := range nodes {
-		totalResource.MilliCpu += node.MilliCpu
-		totalResource.Memory += node.Memory
+		allocatedRes := allocatedResource[node.Name]
+		idleCpu := node.MilliCpu - allocatedRes.MilliCpu
+		idleMemory := node.Memory - allocatedRes.Memory
+		totalResource.MilliCpu += idleCpu
+		totalResource.Memory += idleMemory
 	}
 	cluster := types.Cluster{Id: clusterId, Ip: clientAddress, TotalResource: totalResource}
 	var reply int
@@ -111,8 +114,11 @@ func RegisterCluster() {
 	}
 }
 
-func Heartbeat(s bool) {
-	if s == share {
+func Heartbeat(s bool, pd bool) {
+	if s == share && pd == false {
+		return
+	}
+	if pd == true && share == false {
 		return
 	}
 	share = s

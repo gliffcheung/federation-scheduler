@@ -94,5 +94,7 @@ type UserData struct {
 	Uid         string
 	CurrentTime int64
 	Share       float64
+	DC          float64
+	DS          float64
 	Resource
 }

@@ -27,8 +27,8 @@ func HandleClusterData() {
 	}
 	var content string
 	for data := range clusterDataQ {
-		content = data.Uid + "," + strconv.FormatInt(data.CurrentTime-startTime, 10) + "," + strconv.FormatFloat(data.Share, 'f', 4, 64) + "," +
-			strconv.FormatInt(data.MilliCpu, 10) + "," + strconv.FormatInt(data.Memory, 10) + "," + "\n"
+		content = data.Uid + "," + strconv.FormatInt(data.CurrentTime-startTime, 10) + "," + strconv.FormatFloat(data.DC, 'f', 4, 64) + "," +
+			strconv.FormatFloat(data.DS, 'f', 4, 64) + "," + strconv.FormatFloat(data.Share, 'f', 4, 64) + "," + "\n"
 		buf := []byte(content)
 		fd.Write(buf)
 	}

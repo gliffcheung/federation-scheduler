@@ -212,6 +212,7 @@ func updateAllocatedResource() {
 		res.MilliCpu -= pod.RequestMilliCpu
 		res.Memory -= pod.RequestMemory
 		allocatedResource[nodeName] = res
+		Heartbeat(true, true)
 		glog.Info("---------", nodeName, ":", res)
 	}
 }

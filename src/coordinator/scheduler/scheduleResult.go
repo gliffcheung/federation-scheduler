@@ -15,7 +15,7 @@ var (
 )
 
 func init() {
-	clusterDataQ = make(chan types.UserData, 10)
+	clusterDataQ = make(chan types.UserData, 500)
 	startTime = time.Now().Unix()
 }
 

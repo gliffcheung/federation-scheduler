@@ -29,7 +29,7 @@ func DispatchPods() {
 	for pod := range pendingPodCh {
 		value, ok := usersPodsQ[pod.Uid]
 		if !ok {
-			usersPodsQ[pod.Uid] = make(chan types.Pod, 20)
+			usersPodsQ[pod.Uid] = make(chan types.Pod, 500)
 			value = usersPodsQ[pod.Uid]
 		}
 		if len(value) == 0 {
@@ -81,7 +81,7 @@ func Schedule() {
 
 		// schedule local pod
 		if len(usersPriorityQ) > 0 {
-			share = false
+			Heartbeat(false)
 			topUser := heap.Pop(&usersPriorityQ).(*types.User)
 			select {
 			case firstPod := <-usersPodsQ[topUser.Uid]:
@@ -104,7 +104,6 @@ func Schedule() {
 			default:
 				usersPresent[topUser.Uid] = false
 			}
-			Heartbeat(false)
 		} else {
 			Heartbeat(true)
 		}

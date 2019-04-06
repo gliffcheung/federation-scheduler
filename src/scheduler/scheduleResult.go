@@ -23,9 +23,9 @@ var (
 
 func init() {
 	podInfo = make(map[string]v1.Pod)
-	scheduleDataQ = make(chan types.ScheduleData, 10)
-	executeDataQ = make(chan types.ExecuteData, 10)
-	userDataQ = make(chan types.UserData, 10)
+	scheduleDataQ = make(chan types.ScheduleData, 500)
+	executeDataQ = make(chan types.ExecuteData, 500)
+	userDataQ = make(chan types.UserData, 500)
 	startTime = time.Now().Unix()
 	totalWaitTime = make(map[string]int64)
 }

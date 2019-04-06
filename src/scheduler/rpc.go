@@ -21,7 +21,7 @@ const (
 
 var (
 	client *rpc.Client
-	share  = true
+	share  = false
 )
 
 type Server int
@@ -84,7 +84,7 @@ func RpcInit() {
 		glog.Info(err)
 	}
 	RegisterCluster()
-	Heartbeat()
+	Heartbeat(true)
 
 	// create server
 	rpc.Register(new(Server))
@@ -111,7 +111,11 @@ func RegisterCluster() {
 	}
 }
 
-func Heartbeat() {
+func Heartbeat(s bool) {
+	if s == share {
+		return
+	}
+	share = s
 	nodes := getNodes()
 	var idleResource types.Resource
 	for _, node := range nodes {

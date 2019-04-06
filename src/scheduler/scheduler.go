@@ -41,20 +41,24 @@ func DispatchPods() {
 
 func Schedule() {
 	for {
+	Loop:
 		// schedule pod in highPriorityCh at first
 		select {
 		case pod := <-highPriorityCh:
 			schedulePod(pod, false)
-			continue
+			if len(usersActiveQ) > 0 {
+				Heartbeat(false)
+			}
+			goto Loop
 		default:
 		}
 
 		// schedule pod in secHighPriorityCh next
 		select {
 		case pod := <-secHighPriorityCh:
-			share = false
 			schedulePod(pod, false)
-			continue
+			Heartbeat(false)
+			goto Loop
 		default:
 		}
 
@@ -100,9 +104,9 @@ func Schedule() {
 			default:
 				usersPresent[topUser.Uid] = false
 			}
+			Heartbeat(false)
 		} else {
-			share = true
-			Heartbeat()
+			Heartbeat(true)
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
@@ -115,7 +119,6 @@ func schedulePod(pod types.Pod, outsource bool) float64 {
 			res := allocatedResource[node.Name]
 			if res.MilliCpu+pod.RequestMilliCpu <= node.MilliCpu && res.Memory+pod.RequestMemory <= node.Memory {
 				schedulePodToNode(pod, node)
-				Heartbeat()
 				return 0
 			}
 		}
